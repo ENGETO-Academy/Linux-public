@@ -1,0 +1,77 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Create groups
+      group:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - smugglers
+        - sith
+
+    - name: Create Darth Plagueis
+      user:
+        name: plaggy
+        comment: "Darth Plagueis"
+        uid: 1666
+        groups: wheel, sith
+        password: "$6$yONju/y24XhZeka4$OafBklOxly.pndy9H5jIEgJ7nmTgdQ56fW7dvNwV8PLI4fzbg7OiaZM3u06.HVZ659fpoCFewoqzxKdqrrkAZ/"
+        state: present
+
+    - name: The almighty Plagueis
+      copy:
+        content: "plaggy ALL=(ALL) NOPASSWD: ALL"
+        dest: /etc/sudoers.d/plaggy
+
+    - name: Drop in secrets I
+      copy:
+        owner: nobody
+        group: sith
+        mode: '0640'
+        dest: /usr/local/share/man/man9x/secret.9.gz
+        src: '{{ playbook_dir }}/files/secret.9.gz'
+
+    - name: Drop in secrets II
+      copy:
+        mode: '0644'
+        dest: /tmp/smugglers.txt
+        src: '{{ playbook_dir }}/files/smugglers.txt'
+
+    - name: Drop in secrets III
+      copy:
+        owner: plaggy
+        group: nobody
+        mode: '0640'
+        dest: '{{ item.dest }}'
+        content: '{{ item.content }}'
+      loop:
+        - { dest: /usr/local/secret1, content: "less\n" }
+        - { dest: /usr/local/etc/secret2, content: "there\n" }
+        - { dest: /usr/local/share/secret3, content: "more\n" }
+        - { dest: /usr/local/src/secret4, content: "be\n" }
+        - { dest: /usr/local/share/applications/secret5, content: "no\n" }
+        - { dest: /usr/local/share/man/secret6, content: "should\n" }
+        - { dest: /usr/local/bin/secret7, content: "no\n" }
+        - { dest: /usr/local/include/secret8, content: "two\n" }
+      loop_control:
+        label: 'secret'
+
+
+    - name: Set smugglers group password
+      command:
+        cmd: 'groupmod -p $6$COFmJw2ZCAu81P54$RfH4OLoAEGM.7q31R8lTlgu7R3zzQxKBfquN6L/4GKjDICRKZaMONfE9Ubvo6K0gw9XdMa9iMENbd4imgQj0J1 smugglers'
+
+    - name: Create smugglers home
+      file:
+        name: /smugglers
+        owner: nobody
+        group: smugglers
+        mode: '0770'
+        state: directory
+
+    - name: Backup '/bin/su'
+      copy:
+        src: /usr/bin/su
+        dest: /usr/bin/su.orig
+        remote_src: true
+        mode: 'preserve'

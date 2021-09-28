@@ -1,0 +1,76 @@
+- hosts: localhost
+  tasks:
+    - name: Remove users
+      user:
+        name: '{{ item }}'
+        state: absent
+        remove: yes
+      loop:
+        - plaggy
+        - han
+        - chewie
+        - lando
+        - sidious
+
+    - name: Remove secrets
+      file:
+        name: '{{ item }}'
+        state: absent
+      loop:
+        - /usr/local/secret1
+        - /usr/local/etc/secret2
+        - /usr/local/share/secret3
+        - /usr/local/src/secret4
+        - /usr/local/share/applications/secret5
+        - /usr/local/share/man/secret6
+        - /usr/local/bin/secret7
+        - /usr/local/include/secret8
+        - /usr/local/share/man/man9x/secret.9.gz
+        - /tmp/smugglers.txt
+
+    - name: Remove groups
+      group:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - smugglers
+        - sith
+
+    - name: Remove smugglers home
+      file:
+        name: /smugglers
+        state: absent
+
+    - name: Remove sudoers entries
+      block:
+        - name: Remove sudoers.d entries
+          file:
+            name: "{{ item }}"
+            state: absent
+          loop:
+            - /etc/sudoers.d/plaggy
+            - /etc/sudoers.d/sidious
+
+        - name: Remove sudoers entries
+          lineinfile:
+            path: /etc/sudoers
+            state: absent
+            regexp: '^sidious'
+
+    - name: Restore 'su' binary
+      copy:
+        src: /usr/bin/su.orig
+        dest: /usr/bin/su
+        mode: 'preserve'
+      ignore_errors: true
+
+    - name: Restore 'su' binary
+      file:
+        name: /usr/bin/su.orig
+        state: absent
+      ignore_errors: true
+
+    - name: Remove /var/tmp/sith_rule.txt
+      file:
+        name: "/var/tmp/sith_rule.txt"
+        state: absent
