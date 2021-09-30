@@ -5,8 +5,9 @@ Assignment
 In this assignment, you're going to practice locating files in your system as
 well as compression methods.
 
-1) Find all manual pages in your system which contain the string ``et`` in
-   their name (Note: manual pages are files located somewhere in your system).
+1) Find all manual pages in sections 7 and 8 in your system which contain the
+   string ``et`` in their name (Note: manual pages are files located somewhere
+   in your system).
 2) Copy the manual pages found in the previous step into
    ``/home/student/mans_with_et_in_name`` directory. Collect the names of these
    manual pages, sort them alphabetically and write the resulting list to
