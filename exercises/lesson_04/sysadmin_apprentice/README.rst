@@ -18,7 +18,7 @@ How to run this lab
     # Read the detailed assignment
     $ less ASSIGNMENT
 
-    # Solve the tasks in the ASSIGNMENT file``
+    # Solve the tasks in the ASSIGNMENT file
 
     # Grade your work   (requires root)
     $ sudo ./lab grade
