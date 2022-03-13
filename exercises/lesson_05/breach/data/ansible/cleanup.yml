@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Remove packages
+      yum:
+        name:
+          - htop
+          - stress
+        state: absent
+
+    - name: Remove test user
+      user:
+        name: test
+        state: absent
+        remove: yes

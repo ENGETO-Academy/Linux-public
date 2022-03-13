@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Install packages
+      yum:
+        name:
+          - htop
+          - stress
+        state: latest
+
+    - name: Create test user
+      user:
+        name: test
+        comment: "Test"
+        password: "$6$yUx6FPHLmHG73DG3$Ydu2ySzXyId/wc/C1tjIsrFITzez3UtbYCjieNs36te9RznztmITP1g5KD0YbzpcBfJ0Lq8IdkW7v0BwHDoQD."
+        state: present
+
+    - name: Create sample data
+      copy:
+        dest: /home/test/sample_data
+        owner: test
+        group: test
+        mode: '0660'
+        content: 'SAMPLE DATA FILE'
+
+    - name: Create SSH dir
+      file:
+        name: /home/test/.ssh
+        owner: test
+        group: test
+        mode: '0775'
+        state: directory
+
+    - name: Upload SSH key
+      copy:
+        owner: test
+        group: test
+        mode: 0600
+        dest: /home/test/.ssh/authorized_keys
+        content: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC3L/AE//WYMZBIiGpXMbm5aa1mDsfPIj8aEctO2fQnFRZ/yucaKVLSU2zKi0njz0JwijUVeg+7BDcafjQgEZoFyZvqnk4U+SdKbVbGMiDmJrBggJrr1PLj9DVI6GN945rH6x+CgfrnaTrKm9gC4OJZpZ0IOdhBRzcopQ++PKLNuw== hellofrommalware"
+
+    - name: Upload malware
+      copy:
+        owner: test
+        group: test
+        mode: '0644'
+        dest: /home/test/.bashrc
+        src: '{{ playbook_dir }}/files/bashrc'
