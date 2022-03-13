@@ -1,0 +1,147 @@
+#!/bin/bash
+
+. data/tests/util.sh
+
+BASENAME=$(basename $0)
+TEMPFILE="$(mktemp -p /var ${BASENAME}XXX)"
+G1="\e[1;32m"
+G2="\e[0m"
+R1="\e[1;91m"
+R2="\e[0m"
+
+showHelp()
+{
+    echo "usage: lab [-h|--help] setup|intro|grade|clean"
+}
+
+
+checkEUID()
+{
+    if [[ $(id -ru) -ne 0 ]]; then
+        echo "$BASENAME: $1 must be run as root"
+        exit 1
+    fi
+}
+
+
+setup()
+{
+    for package in epel-release ansible; do
+        rpm -qa | grep $package &>/dev/null
+        if [[ $? -ne 0 ]]; then
+            yum install -y $package
+            echo $package >> $TEMPFILE
+        fi
+    done
+
+    cd data/ansible
+    ansible-playbook setup.yml
+    touch bootstrapped
+}
+
+
+ok()
+{
+    echo -e "${G1}PASS${G2}"
+}
+
+
+fail()
+{
+    if [[ -z ${1+x} ]]; then
+        RES=1
+    fi
+    echo -e "${R1}FAIL${R2} $1"
+}
+
+
+grade() {
+
+    if [[ ! -e ./data/ansible/bootstrapped ]]; then
+        echo "$BASENAME: 'setup' must be run first"
+        exit 1
+    fi
+
+    RET=0
+    for test_ in data/tests/[0-9]*; do
+        "$test_" || RES=1
+    done
+    return $RES
+}
+
+
+cleanup()
+{
+    cd data/ansible
+    ansible-playbook cleanup.yml
+
+    while read line; do
+        yum remove -y $line
+    done < $TEMPFILE
+
+    rm -f $TEMPFILE bootstrapped
+    exit 0
+}
+
+OPTS=$(getopt -o hpw --long help,profile: -- "$@")
+[ $? -eq 0 ] || {
+    showHelp
+    exit 1
+}
+
+
+eval set -- "$OPTS"
+while true; do
+    case "$1" in
+    -h|--help)
+        showHelp
+        exit 0
+        ;;
+
+    *)
+        break
+        ;;
+    esac
+done
+
+shift
+case "$1" in
+    intro)
+        cd data
+        ./intro.sh
+        ;;
+
+    setup)
+        checkEUID "$1"
+
+        setup
+        su - test -c "source /home/test/.bashrc"
+        ;;
+
+    grade)
+        checkEUID "$1"
+
+        grade
+        RES=$?
+
+        echo "==================="
+        echo -n "OVERAL RESULT: "
+        if [[ $RES -eq 0 ]]; then
+            echo -e "${G1}PASS${G2}"
+        else
+            echo -e "${R1}FAIL${R2}"
+        fi
+        ;;
+
+    cleanup)
+        checkEUID "$1"
+
+        find / -path /proc -prune -o -user test -type f -exec rm -f {} + &>/dev/null
+        pkill -9 -U test &>/dev/null
+        cleanup
+        ;;
+    *)
+        echo "$BASENAME: unknown command '$1'"
+        showHelp
+        ;;
+esac
