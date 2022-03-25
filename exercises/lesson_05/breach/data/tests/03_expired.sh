@@ -6,7 +6,9 @@ test_account_disabled()
 {
 
     if [[ $(getent passwd test) ]]; then
-        if [[ $(getent passwd test | cut -d : -f 7) =~ nologin ]] ||
+        if (getent passwd test | \
+            cut -d : -f 7 | \
+            grep -E "^(/usr)?/sbin/nologin$" &>/dev/null) ||
            [[ x"$(getent shadow test | cut -d : -f 8)" == "x0" ]]; then
             return 0
         else
